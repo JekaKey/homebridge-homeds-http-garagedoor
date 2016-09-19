@@ -14,9 +14,11 @@ module.exports = function(homebridge) {
 function HomeDSAccessory(log, config) {
     this.log = log;
     this.name = config["name"];
-    this.controlurl = config["controlURL"];
-    this.statusurl = config["statusURL"];
-		this.curState = undefined;
+    this.stateUrl = config["stateUrl"];
+    this.openUrl = config["openUrl"];
+    this.closeUrl = config["closeUrl"];
+    this.curState = undefined;
+    this.poolingInterval = config["poolingInterval"];
 
     this.garageservice = new Service.GarageDoorOpener(this.name, this.name);
     this.currentDoorState = this.garageservice.getCharacteristic(DoorState);
@@ -31,9 +33,65 @@ function HomeDSAccessory(log, config) {
         .on('get', this.getState.bind(this))
         .on('set', this.setState.bind(this));
 
+    this.init();
+
 }
 
 HomeDSAccessory.prototype = {
+
+    init: function() {
+
+        setTimeout(this.monitorState.bind(this), this.poolingInterval);
+    },
+    monitorState: function() {
+        console.log('monitor state');
+
+        request.get({
+            url: this.stateUrl
+        }, function(err, response, body) {
+
+            if (!err && response.statusCode == 200) {
+
+                var curState = body;
+
+                if (curState != this.curState) {
+
+                    console.log('State is %s', curState);
+
+                    switch (curState) {
+                        case 'open':
+                            this.currentDoorState.setValue(DoorState.OPEN);
+                            // this.targetDoorState.setValue(DoorStateTarget.OPEN);
+                            break;
+                        case 'opening':
+                            this.currentDoorState.setValue(DoorState.OPENING);
+                            // this.targetDoorState.setValue(DoorStateTarget.OPEN);
+                            break;
+                        case 'closed':
+                            this.currentDoorState.setValue(DoorState.CLOSED);
+                            // this.targetDoorState.setValue(DoorStateTarget.CLOSED);
+                            break;
+                        case 'closing':
+                            this.currentDoorState.setValue(DoorState.CLOSING);
+                            // this.targetDoorState.setValue(DoorStateTarget.CLOSED);
+                            break;
+                        default:
+                            console.log('Error state');
+                    }
+
+                    this.curState = curState;
+
+                }
+
+            } else {
+                this.log('Server error');
+            }
+
+        }.bind(this));
+
+        setTimeout(this.monitorState.bind(this), this.poolingInterval);
+
+    },
     getState: function(callback) {
         this.log("Getting current state...");
         // console.log(DoorStateTarget);
@@ -55,7 +113,7 @@ HomeDSAccessory.prototype = {
         // 		callback(err);
         // 	}
         // }.bind(this));
-        // return true;
+        return true;
 
     },
     setClose: function() {
@@ -68,26 +126,36 @@ HomeDSAccessory.prototype = {
         // this.targetDoorState.setValue(DoorState.OPEN);
     },
     setState: function(state, callback) {
-        var doorState = (state == Characteristic.TargetDoorState.CLOSED) ? "closed" : "open";
+        var doorState = (state == DoorStateTarget.CLOSED) ? "closed" : "open";
+
+        console.log('Target state ' + DoorStateTarget.CLOSED);
+        console.log('Need state ' + state);
+
         this.log("Set state to %s", doorState);
 
-        // this.log(DoorState);
+        request.get({
+            url: (doorState == "closed") ? this.closeUrl : this.openUrl
+        }, function(err, response, body) {
+            if (!err && response.statusCode == 200) {
 
-        // var curState = (state == this.targetDoorState.CLOSED) ? this.currentDoorState.CLOSED : this.currentDoorState.OPEN;
-        //
-        // // this.currentDoorState.setValue(curState);
-        // this.currentDoorState.setValue(this.targetDoorState.CLOSED);
+                if (doorState == "closed") {
+                    console.log('Закрываем');
+                    // this.currentDoorState.setValue(DoorState.CLOSING);
+                    // setTimeout(this.setClose.bind(this), 4000);
+                } else {
 
-        if (state == DoorState.OPEN) {
-            this.currentDoorState.setValue(DoorState.OPENING);
-            setTimeout(this.setOpen.bind(this), 4000);
-        } else {
-            this.currentDoorState.setValue(DoorState.CLOSING);
-            setTimeout(this.setClose.bind(this), 4000);
-        }
+                    console.log('Открываем');
+                    // this.currentDoorState.setValue(DoorState.OPENING);
+                    // setTimeout(this.setOpen.bind(this), 4000);
+                }
 
-        callback(null); // success
-        return true;
+                callback(null);
+            } else {
+                this.log("Error server set state");
+                callback(null);
+            }
+        }.bind(this));
+
     }
 
 }
