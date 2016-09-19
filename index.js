@@ -53,6 +53,7 @@ HomeDSAccessory.prototype = {
             if (!err && response.statusCode == 200) {
 
                 var curState = body;
+                // console.log(this.targetDoorState.getValue());
 
                 if (curState != this.curState) {
 
@@ -61,19 +62,19 @@ HomeDSAccessory.prototype = {
                     switch (curState) {
                         case 'open':
                             this.currentDoorState.setValue(DoorState.OPEN);
-                            // this.targetDoorState.setValue(DoorStateTarget.OPEN);
+                            this.targetDoorState.setValue(DoorStateTarget.OPEN);
                             break;
                         case 'opening':
                             this.currentDoorState.setValue(DoorState.OPENING);
-                            // this.targetDoorState.setValue(DoorStateTarget.OPEN);
+                            this.targetDoorState.setValue(DoorStateTarget.OPEN);
                             break;
                         case 'closed':
                             this.currentDoorState.setValue(DoorState.CLOSED);
-                            // this.targetDoorState.setValue(DoorStateTarget.CLOSED);
+                            this.targetDoorState.setValue(DoorStateTarget.CLOSED);
                             break;
                         case 'closing':
                             this.currentDoorState.setValue(DoorState.CLOSING);
-                            // this.targetDoorState.setValue(DoorStateTarget.CLOSED);
+                            this.targetDoorState.setValue(DoorStateTarget.CLOSED);
                             break;
                         default:
                             console.log('Error state');
