@@ -1,6 +1,6 @@
 {
     "name": "homebridge-homeds-http-garagedoor",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "description": "HTTP door",
     "license": "MIT",
     "author": "jekakey",
