@@ -1,5 +1,6 @@
 # homebridge-homeds-http-garagedoor
 
+```js
 {
     "accessory": "HomeDSHttpGarageDoor",
     "name": "Гараж",
@@ -8,3 +9,4 @@
     "closeUrl": "http://localhost:3000/closeDoor",
     "poolingInterval": 2000
 }
+```
