@@ -66,7 +66,7 @@ HomeDSAccessory.prototype = {
                             break;
                         case 'opening':
                             this.currentDoorState.setValue(DoorState.OPENING);
-                            this.targetDoorState.setValue(DoorStateTarget.OPEN);
+                            // this.targetDoorState.setValue(DoorStateTarget.OPEN);
                             break;
                         case 'closed':
                             this.currentDoorState.setValue(DoorState.CLOSED);
@@ -74,7 +74,7 @@ HomeDSAccessory.prototype = {
                             break;
                         case 'closing':
                             this.currentDoorState.setValue(DoorState.CLOSING);
-                            this.targetDoorState.setValue(DoorStateTarget.CLOSED);
+                            // this.targetDoorState.setValue(DoorStateTarget.CLOSED);
                             break;
                         default:
                             console.log('Error state');
