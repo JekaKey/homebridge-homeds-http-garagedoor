@@ -41,7 +41,7 @@ HomeDSAccessory.prototype = {
 
     init: function() {
 
-        setTimeout(this.monitorState.bind(this), this.poolingInterval);
+        setTimeout(this.monitorState.bind(this), 10000);
     },
     monitorState: function() {
 
@@ -81,57 +81,15 @@ HomeDSAccessory.prototype = {
                     this.log('Устанавливаем статус');
                     this.currentDoorState.setValue(realState);
 
-                    if (realState == 0 && this.targetDoorState != 0) {
+                    if (realState == 0 && this.targetDoorState != DoorStateTarget.OPEN) {
                         this.targetDoorState.setValue(0);
                     }
 
-                    if (realState == 1 && this.targetDoorState != 1) {
+                    if (realState == 1 && this.targetDoorState != DoorStateTarget.CLOSED) {
                         this.targetDoorState.setValue(1);
                     }
 
                 }
-
-                // if (realState == 0 && this.targetDoorState.value != 0) {
-                //     this.targetDoorState.setValue(realState);
-                // }
-                //
-                // if (realState == 1 && this.targetDoorState.value != 1) {
-                //     this.targetDoorState.setValue(realState);
-                // }
-
-                // if (curState != this.curState) {
-                //
-                //     this.log('State is %s', curState);
-                //
-                //     switch (curState) {
-                //         case 'open':
-                //             console.log('Открыто');
-                //             this.currentDoorState.setValue(DoorState.OPEN);
-                //             this.targetDoorState.setValue(DoorStateTarget.OPEN);
-                //             break;
-                //             // case 'opening':
-                //             //     console.log('Открываем');
-                //             //     this.currentDoorState.setValue(DoorState.STOPPED);
-                //             //     this.targetDoorState.setValue(DoorStateTarget.OPEN);
-                //             //     break;
-                //         case 'closed':
-                //             console.log('Закрыто');
-                //             this.currentDoorState.setValue(DoorState.CLOSED);
-                //             this.targetDoorState.setValue(DoorStateTarget.CLOSED);
-                //             break;
-                //             // case 'closing':
-                //             //     console.log('Закрываем');
-                //             //     this.currentDoorState.setValue(DoorState.CLOSING);
-                //             //     // this.targetDoorState.setValue(DoorStateTarget.CLOSED);
-                //             //   // this.currentDoorState.setValue(DoorState.STOPPED);
-                //             //     break;
-                //         default:
-                //             console.log('Error state');
-                //     }
-                //
-                //     this.curState = curState;
-                //
-                // }
 
             } else {
                 this.log('Server error');
@@ -143,27 +101,43 @@ HomeDSAccessory.prototype = {
 
     },
     getState: function(callback) {
+
+        // this.monitorState(callback);
+
         this.log("Getting current state...");
         // console.log(DoorStateTarget);
         // this.currentDoorState.setValue(DoorState.OPEN);
 
-        callback(null, DoorState.CLOSED);
-        // request.get({
-        // 	url: this.statusurl
-        // }, function(err, response, body) {
-        // 	if (!err && response.statusCode == 200) {
-        // 		var json = JSON.parse(body);
-        // 		var state = json.state; // "open" or "closed"
-        // 		this.log("Door state is %s", state);
-        // 		var closed = state == "closed"
-        // 		// this.currentDoorState.setValue(DoorState.CLOSED);
-        // 		callback(null, DoorState.OPEN); // success
-        // 	} else {
-        // 		this.log("Error getting state: %s", err);
-        // 		callback(err);
-        // 	}
-        // }.bind(this));
-        return true;
+        // callback(null, DoorState.CLOSING);
+
+        request.get({
+            url: this.stateUrl
+        }, function(err, response, body) {
+            if (!err && response.statusCode == 200) {
+
+                var curState = body;
+                var realState = 0;
+                switch (curState) {
+                    case 'open':
+                        realState = 0;
+                        break;
+                    case 'closed':
+                        realState = 1;
+                        break;
+                    case 'opening':
+                    default:
+                        realState = 0;
+
+                }
+
+                callback(null, realState);
+
+            } else {
+                this.log("Error getting state: %s", err);
+                callback(null);
+            }
+        }.bind(this));
+        // return true;
 
     },
     setClose: function() {
