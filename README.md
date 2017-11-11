@@ -3,10 +3,11 @@
 ```js
 {
     "accessory": "HomeDSHttpGarageDoor",
-    "name": "Гараж",
+    "name": "Garage",
     "stateUrl": "http://localhost:3000/stateDoor",
     "openUrl": "http://localhost:3000/openDoor",
     "closeUrl": "http://localhost:3000/closeDoor",
-    "poolingInterval": 2000
+    "poolingInterval": 2000,
+    "method": "post"
 }
 ```

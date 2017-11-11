@@ -20,9 +20,13 @@ function HomeDSAccessory(log, config) {
     this.curState = undefined;
     this.poolingInterval = config["poolingInterval"];
 
+    this.method = config["method"];
+
     this.garageservice = new Service.GarageDoorOpener(this.name, this.name);
     this.currentDoorState = this.garageservice.getCharacteristic(DoorState);
     this.targetDoorState = this.garageservice.getCharacteristic(DoorStateTarget);
+
+    if (this.method == undefined) {this.method = 'get'}
 
     this.garageservice
         .getCharacteristic(Characteristic.CurrentDoorState)
@@ -45,13 +49,15 @@ HomeDSAccessory.prototype = {
     },
     monitorState: function() {
 
-        request.get({
+        request[this.method]({
             url: this.stateUrl
         }, function(err, response, body) {
 
             if (!err && response.statusCode == 200) {
 
-                var curState = body;
+            	body = JSON.parse(body);
+
+                var curState = body->result;
                 this.log('monitor state %s', body);
                 this.log('Current door state %s', this.currentDoorState.value);
                 this.log('Target door state %s', this.targetDoorState.value);
@@ -110,12 +116,15 @@ HomeDSAccessory.prototype = {
 
         // callback(null, DoorState.CLOSING);
 
-        request.get({
+        request[this.method]({
             url: this.stateUrl
         }, function(err, response, body) {
             if (!err && response.statusCode == 200) {
 
-                var curState = body;
+                
+                body = JSON.parse(body);
+                var curState = body->result;
+
                 var realState = 0;
                 switch (curState) {
                     case 'open':
@@ -160,7 +169,7 @@ HomeDSAccessory.prototype = {
 
         if (this.targetDoorState.value != state) {
             this.log('Делаем');
-            request.get({
+            request[this.method]({
                 url: (doorState == "closed") ? this.closeUrl : this.openUrl
             }, function(err, response, body) {
                 if (!err && response.statusCode == 200) {
