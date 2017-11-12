@@ -44,7 +44,6 @@ function HomeDSAccessory(log, config) {
 HomeDSAccessory.prototype = {
 
     init: function() {
-
         setTimeout(this.monitorState.bind(this), 10000);
     },
     monitorState: function() {
@@ -57,7 +56,7 @@ HomeDSAccessory.prototype = {
 
             	body = JSON.parse(body);
 
-                var curState = body->result;
+                var curState = body.result.toLowerCase();
                 this.log('monitor state %s', body);
                 this.log('Current door state %s', this.currentDoorState.value);
                 this.log('Target door state %s', this.targetDoorState.value);
@@ -123,7 +122,7 @@ HomeDSAccessory.prototype = {
 
                 
                 body = JSON.parse(body);
-                var curState = body->result;
+                var curState = body.result.toLowerCase();
 
                 var realState = 0;
                 switch (curState) {
