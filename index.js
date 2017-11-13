@@ -17,7 +17,7 @@ function HomeDSAccessory(log, config) {
     this.stateUrl = config["stateUrl"];
     this.openUrl = config["openUrl"];
     this.closeUrl = config["closeUrl"];
-    this.curState = undefined;
+    this.curState = 'OPEN';
     this.poolingInterval = config["poolingInterval"];
 
     this.method = config["method"];
@@ -44,7 +44,8 @@ function HomeDSAccessory(log, config) {
 HomeDSAccessory.prototype = {
 
     init: function() {
-        setTimeout(this.monitorState.bind(this), 10000);
+        this.log('Init HomeDSHttpGarageDoor');
+        setTimeout(this.monitorState.bind(this), 1000);
     },
     monitorState: function() {
 
@@ -56,45 +57,28 @@ HomeDSAccessory.prototype = {
 
             	body = JSON.parse(body);
 
-                var curState = body.result.toLowerCase();
-                this.log('monitor state %s', body);
-                this.log('Current door state %s', this.currentDoorState.value);
-                this.log('Target door state %s', this.targetDoorState.value);
+                var curState = body.result.toUpperCase();
+                this.log('Monitor state %s', curState);
 
-                var realState = 0;
-                switch (curState) {
-                    case 'open':
-                        realState = 0;
-                        break;
-                    case 'closed':
-                        realState = 1;
-                        break;
-                    case 'opening':
-                        realState = 2;
-                        this.targetDoorState.setValue(0);
-                        break;
-                    case 'closing':
-                        realState = 3;
-                        this.targetDoorState.setValue(1);
-                        break;
-                    default:
-                        this.log('Unkown state');
+                if (curState != this.curState) {
+                    this.log('State change from %s to %s', this.curState, curState);
+                    this.garageservice.setCharacteristic(Characteristic.CurrentDoorState, Characteristic.CurrentDoorState[curState]);
+
+                    if (curState == 'CLOSED' || curState == 'CLOSING') {
+                        this.garageservice.setCharacteristic(Characteristic.TargetDoorState, Characteristic.TargetDoorState.CLOSED);
+                    }
+
+                    if (curState == 'OPEN' || curState == 'OPENING') {
+                        this.garageservice.setCharacteristic(Characteristic.TargetDoorState, Characteristic.TargetDoorState.OPEN);
+                    }
+
+                    
 
                 }
 
-                if (this.currentDoorState.value != realState) {
-                    this.log('Устанавливаем статус');
-                    this.currentDoorState.setValue(realState);
 
-                    if (realState == 0 && this.targetDoorState != DoorStateTarget.OPEN) {
-                        this.targetDoorState.setValue(0);
-                    }
 
-                    if (realState == 1 && this.targetDoorState != DoorStateTarget.CLOSED) {
-                        this.targetDoorState.setValue(1);
-                    }
-
-                }
+                this.curState = curState;
 
             } else {
                 this.log('Server error');
@@ -106,7 +90,10 @@ HomeDSAccessory.prototype = {
 
     },
     getState: function(callback) {
+        this.log('Get current state');
 
+        callback(null, 1);
+/*
         // this.monitorState(callback);
 
         this.log("Getting current state...");
@@ -145,7 +132,7 @@ HomeDSAccessory.prototype = {
                 callback(null);
             }
         }.bind(this));
-        // return true;
+        // return true;*/
 
     },
     setClose: function() {
@@ -173,25 +160,17 @@ HomeDSAccessory.prototype = {
             }, function(err, response, body) {
                 if (!err && response.statusCode == 200) {
 
-                    if (doorState == "closed") {
-                        this.log('Закрываем');
-                        this.currentDoorState.setValue(DoorState.CLOSING);
-                        // setTimeout(this.setClose.bind(this), 4000);
-                    } else {
+                // this.garageservice.setCharacteristic(Characteristic.TargetDoorState, state);
 
-                        this.log('Открываем');
-                        this.currentDoorState.setValue(DoorState.OPENING);
-                        // setTimeout(this.setOpen.bind(this), 4000);
-                    }
 
-                    callback(null);
+                    callback(null,state);
                 } else {
                     this.log("Error server set state");
-                    callback(null);
+                    callback(null,state);
                 }
             }.bind(this));
         } else {
-            callback(null);
+            callback(null,state);
         }
 
     }
